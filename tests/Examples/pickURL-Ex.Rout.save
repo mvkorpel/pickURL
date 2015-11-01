@@ -1,0 +1,117 @@
+
+R Under development (unstable) (2015-10-29 r69583) -- "Unsuffered Consequences"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "pickURL"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('pickURL')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("pick_urls")
+> ### * pick_urls
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pick_urls
+> ### Title: Extract URLs and email addresses from text
+> ### Aliases: pick_urls
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+> 
+> email1 <- "user1@example.org"
+> urls <- c("http://www.example.org/",
++           "ftp://cran.r-project.org",
++           "https://a,b,c@[vf.a1,b2]/foo,bar",
++           paste0("mailto:", email1))
+> phrase <- c(paste0("See ", urls[1], ", ", urls[2], " and"),
++             paste0(urls[3], "."))
+> url_urls <- paste0("With prefix URL:", urls, " and that's all.")
+> comma_urls <- paste0(urls, collapse=",")
+> angle_urls <- sub(".", ".\n", paste0("<", urls, ">"), fixed=TRUE)
+> split_urls <- unlist(strsplit(angle_urls, "\n", fixed=TRUE))
+> 
+> pu1 <- pick_urls(urls)
+> identical(pu1, urls[1:3])                       # TRUE
+[1] TRUE
+> pu2 <- pick_urls(urls, url_pattern="")
+> identical(pu2, urls)                            # TRUE
+[1] TRUE
+> pu3 <- pick_urls(phrase)
+> identical(pu3, pu1)                             # TRUE
+[1] TRUE
+> pu4 <- pick_urls(url_urls, url_pattern="")
+> identical(pu4, urls)                            # TRUE
+[1] TRUE
+> pu5 <- pick_urls(urls, url_pattern="", all_email=TRUE)
+> identical(pu5[["url"]], urls[1:3])              # TRUE
+[1] TRUE
+> identical(pu5[["email"]], email1)               # TRUE
+[1] TRUE
+> pu6 <- pick_urls(comma_urls, url_pattern="")
+> identical(pu6, urls)                            # TRUE
+[1] TRUE
+> pu7 <- pick_urls(angle_urls, url_pattern="")
+> identical(pu7, urls)                            # TRUE
+[1] TRUE
+> pu8 <- pick_urls(split_urls, url_pattern="", collapse_x=TRUE)
+> identical(pu8, urls)                            # TRUE
+[1] TRUE
+> 
+> emails <- c("user2 at example.org",
++             "\"user 3\"(comment) @ localhost",
++             "\"user", " 4\"@", " [::", " 1]")
+> emails_target <- c("user2@example.org",
++                    "\"user 3\"@localhost",
++                    "\"user 4\"@[::1]")
+> 
+> pe1 <- pick_urls(emails, plain_email=TRUE)
+> identical(pe1[["email"]], emails_target[1])     # TRUE
+[1] TRUE
+> pe2 <- pick_urls(emails, plain_email=TRUE, email_pattern="")
+> identical(pe2[["email"]], emails_target[1:2])   # TRUE
+[1] TRUE
+> pe3 <- pick_urls(emails, plain_email=TRUE, email_pattern="",
++                  collapse_x=TRUE)
+> identical(pe3[["email"]], emails_target)        # TRUE
+[1] TRUE
+> pe4 <- pick_urls(emails, plain_email=TRUE, email_pattern="",
++                  deobfuscate=FALSE)
+> identical(pe4[["email"]], emails_target[2])     # TRUE
+[1] TRUE
+> 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.117 0.006 0.133 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

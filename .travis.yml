@@ -3,7 +3,7 @@ warnings_are_errors: true
 sudo: required
 
 before_install:
-  - sudo apt-get update && sudo apt-get --reinstall install -qq language-pack-en language-pack-de
+  - sudo apt-get update && sudo apt-get --reinstall install -qq language-pack-en && sudo echo en_US ISO-8859-1 >> /var/lib/locales/supported.d/local && sudo dpkg-reconfigure locales && locale -a
 
 r_packages:
   - covr

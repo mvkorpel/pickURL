@@ -214,7 +214,7 @@
 #'
 #' emails <- c("user2 at example.org",
 #'             "\"user 3\"(comment) @@ localhost",
-#'             "\"user", " 4\"@@", " [::", " 1]")
+#'             "\"user", " 4\"@@[::", " 1]")
 #' emails_target <- c("user2@@example.org",
 #'                    "\"user 3\"@@localhost",
 #'                    "\"user 4\"@@[::1]")
@@ -1213,8 +1213,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                        "|\\)[[:space:]]*[aA][tT](?:\\(|[[:space:]])",
                        "|(?:\\)|[[:space:]])[aA][tT][[:space:]]*\\(")
             k_nopunct <- "^(?:[^[:punct:]]|[-.])+$"
-            k_letter <- "[^[:blank:][:space:][:cntrl:][:punct:][:digit:]]"
         }
+        k_letter <- "[^[:blank:][:space:][:cntrl:][:punct:][:digit:]]"
         k_address <-
             vapply(k_addr_begin, paste0, character(length(k_addr_end)),
                    k_addr_end, USE.NAMES = FALSE)
@@ -1495,6 +1495,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                     addr_last <- addr_last[h_good]
                     host_part <- host_part[h_good]
                     loc_len <- local_len[[this_idx]][h_good]
+                    h_loc <- h_loc[h_good]
                     addr <- substring(this_str, addr_loc, addr_last)
                 } else {
                     addr <- NULL
@@ -1558,6 +1559,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                     visit_comment[[this_idx]][dont_visit] <- FALSE
                     host_part <- host_part[keep_addr]
                     loc_len <- loc_len[keep_addr]
+                    h_loc <- h_loc[keep_addr]
                     addr <- addr[keep_addr]
                 }
                 if (length(addr) > 0L) {
@@ -1588,12 +1590,41 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                             drop <- deobfu[drop]
                             loc_part <- loc_part[-drop]
                             host_part <- host_part[-drop]
+                            addr <- addr[-drop]
+                            loc_len <- loc_len[-drop]
+                            h_loc <- h_loc[-drop]
                         }
                     }
-                } else {
-                    loc_part <- NULL
+                    ## Avoid false positives: require letter or no spaces
+                    if (length(addr) > 0L) {
+                        drop_l <-
+                            !grepl(k_letter, loc_part, perl = TRUE)
+                        if (any(drop_l)) {
+                            len_p <- loc_len[drop_l] + 1
+                            drop_l[drop_l] <-
+                                grepl("[[:space:]]",
+                                      substr(addr[drop_l],
+                                             len_p, len_p), perl = TRUE)
+                        }
+                        drop_r <-
+                            !grepl(k_letter, host_part, perl = TRUE)
+                        if (any(drop_r)) {
+                            host_m <- h_loc[drop_r] - 1
+                            drop_r[drop_r] <-
+                                grepl("[[:space:]]",
+                                      substring(this_str,
+                                                host_m, host_m),
+                                      perl = TRUE)
+                        }
+                        drop <- which(drop_l | drop_r)
+                        if (length(drop) > 0L) {
+                            loc_part <- loc_part[-drop]
+                            host_part <- host_part[-drop]
+                            addr <- addr[-drop]
+                        }
+                    }
                 }
-                if (length(loc_part) > 0L) {
+                if (length(addr) > 0L) {
                     addr <- paste0(loc_part, "@", host_part)
                     if (single_email) {
                         addr <- addr[1L]

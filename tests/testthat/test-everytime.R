@@ -413,6 +413,17 @@ test_results <- function() {
         expect_identical(pick_noobfu[[2]], no_obfu)
     })
 
+    nospace <- c("/*@example.org", "foo@0.1", "a@example.org",
+                 "a\n @example.org", "/*\n @example.org", "foo@\n 0.1")
+    nospace_sub <- sub("\n ", "", nospace, fixed = TRUE)
+    pick_nsp1 <- pick_urls(nospace[1:4], plain_email = TRUE)
+    pick_nsp2 <- pick_urls(nospace[5:6], plain_email = TRUE)
+    test_that("if there are spaces, letters are required", {
+        expect_equal(length(pick_nsp1[[1]]), 0)
+        expect_equal(lengths(pick_nsp2, use.names=FALSE), c(0, 0))
+        expect_identical(pick_nsp1[[2]], nospace_sub[1:4])
+    })
+
     ## Test mailto URLs
     mailto_emails <- paste0("mailto:",
                             c(emails[1:2], paste0(emails[1:2], collapse=",")))

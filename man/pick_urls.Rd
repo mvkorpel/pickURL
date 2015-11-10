@@ -229,7 +229,7 @@ identical(pu8, urls)                            # TRUE
 
 emails <- c("user2 at example.org",
             "\\"user 3\\"(comment) @ localhost",
-            "\\"user", " 4\\"@", " [::", " 1]")
+            "\\"user", " 4\\"@[::", " 1]")
 emails_target <- c("user2@example.org",
                    "\\"user 3\\"@localhost",
                    "\\"user 4\\"@[::1]")

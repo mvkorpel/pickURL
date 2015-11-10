@@ -400,6 +400,19 @@ test_results <- function() {
         expect_equal(lengths(ip_bad, use.names=FALSE), c(0, 0))
     })
 
+    obfu <- c("ab at c.def", "a.b at c.def", "a-b at c.def",
+              "a/b at c.def", "a at c.def", "ab at c.de", "10 at c.def",
+              "ab at 0.123", "\"foo\" at c.def")
+    no_obfu <- sub(" at ", "@", obfu, fixed = TRUE)
+    pick_obfu <- pick_urls(obfu, plain_email = TRUE)
+    pick_noobfu <- pick_urls(no_obfu, plain_email = TRUE)
+    test_that("there are some requirements for obfuscated addresses", {
+        expect_equal(length(pick_obfu[[1]]), 0)
+        expect_equal(length(pick_noobfu[[1]]), 0)
+        expect_identical(pick_obfu[[2]], no_obfu[1:3])
+        expect_identical(pick_noobfu[[2]], no_obfu)
+    })
+
     ## Test mailto URLs
     mailto_emails <- paste0("mailto:",
                             c(emails[1:2], paste0(emails[1:2], collapse=",")))

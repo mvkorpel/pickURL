@@ -1212,6 +1212,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 paste0(k_rough_comment,
                        "|\\)[[:space:]]*[aA][tT](?:\\(|[[:space:]])",
                        "|(?:\\)|[[:space:]])[aA][tT][[:space:]]*\\(")
+            k_nopunct <- "^(?:[^[:punct:]]|[-.])+$"
+            k_letter <- "[^[:blank:][:space:][:cntrl:][:punct:][:digit:]]"
         }
         k_address <-
             vapply(k_addr_begin, paste0, character(length(k_addr_end)),
@@ -1561,6 +1563,37 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 if (length(addr) > 0L) {
                     loc_part <- gsub("(?<!\\\\)[[:space:]]+", " ",
                                      substr(addr, 1L, loc_len), perl=TRUE)
+                    ## Avoid some false positives in deobfuscated
+                    ## addresses by requiring at least one letter in
+                    ## both local and host part, no punctuation except
+                    ## "." and "-", lengths at least 2 + 5.
+                    if (deobfuscate) {
+                        loc_aft <- substr(addr, loc_len + 1, nchar(addr))
+                        deobfu <- grep("^[[:space:]]*@", loc_aft,
+                                       perl = TRUE, invert = TRUE)
+                    }
+                    if (deobfuscate && length(deobfu) > 0L) {
+                        loc_deobfu <- loc_part[deobfu]
+                        host_deobfu <- host_part[deobfu]
+                        drop <- !grepl(k_nopunct, loc_deobfu, perl = TRUE)
+                        drop <- drop |
+                            !grepl(k_nopunct, host_deobfu, perl = TRUE)
+                        drop <- drop |
+                            !grepl(k_letter, loc_deobfu, perl = TRUE)
+                        drop <- drop |
+                            !grepl(k_letter, host_deobfu, perl = TRUE)
+                        drop <- drop | nchar(loc_deobfu) < 2
+                        drop <- drop | nchar(host_deobfu) < 5
+                        if (any(drop)) {
+                            drop <- deobfu[drop]
+                            loc_part <- loc_part[-drop]
+                            host_part <- host_part[-drop]
+                        }
+                    }
+                } else {
+                    loc_part <- NULL
+                }
+                if (length(loc_part) > 0L) {
                     addr <- paste0(loc_part, "@", host_part)
                     if (single_email) {
                         addr <- addr[1L]

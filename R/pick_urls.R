@@ -788,7 +788,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                     break
                 }
                 first_scheme <- regexpr(k_sch_colon, remain, perl = TRUE)
-            } else if (first_scheme == -1L) {
+            }
+            if (first_scheme == -1L) {
                 ## Simple case: no URL schemes => split at every comma
                 split1 <- strsplit(remain, ",", fixed = TRUE)[[1L]]
                 if (only_first) {

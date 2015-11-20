@@ -751,6 +751,47 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         chars[tmp] <- "]"
         paste0(rev(chars), collapse="")
     }
+    ## find_fixed_perl: Find perl_pat (perl=TRUE) which ends with
+    ## fixed_pat (fixed=TRUE). peek_back > 0 can be used when perl_pat
+    ## has the same conditions for all character before fixed_pat.
+    find_fixed_perl <- function(string, fixed_pat, perl_pat,
+                                peek_back = 50) {
+        remain <- string
+        skip <- 0
+        nc <- nchar(remain)
+        nc_fixed <- nchar(fixed_pat)
+        nc_fixed_m1 <- nc_fixed - 1
+        do_peek <- peek_back > 0
+        while (nc > nc_fixed) {
+            loc1 <- regexpr(fixed_pat, remain, fixed = TRUE)
+            if (loc1 == -1) {
+                break
+            }
+            newskip <- loc1 + nc_fixed_m1
+            start1 <- 1
+            if (do_peek) {
+                start1 <- max(1, loc1 - peek_back)
+            }
+            sub1 <- substr(remain, start1, newskip)
+            loc2 <- regexpr(perl_pat, sub1, perl = TRUE)
+            if (loc2 != -1) {
+                if (do_peek) {
+                    if (loc2 == 1) {
+                        sub1 <- substr(remain, 1, newskip)
+                        loc2 <- regexpr(perl_pat, sub1, perl = TRUE)
+                    } else {
+                        loc2 <- loc2 - 1 + start1
+                    }
+                }
+                ## match.length is preserved
+                return(loc2 + skip)
+            }
+            skip <- skip + newskip
+            remain <- substr(remain, newskip + 1, nc)
+            nc <- nc - newskip
+        }
+        -1
+    } # end of find_fixed_perl
     ## split_and_check: Handles commas (keeps some of them, splits the
     ## string at others). Removes a possible (repeated) "URL:"
     ## prefix. Discards URLs with invalid host or port
@@ -771,7 +812,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         ## on every round.
         remain <- string
         while (nzchar(remain) && (!only_first || length(strings) == 0L)) {
-            first_scheme <- regexpr(k_sch_colon, remain, perl = TRUE)
+            first_scheme <- find_fixed_perl(remain, ":", k_sch_colon)
             ## Remove any (repeated) "URL:" (case insensitive) prefix
             start_url <- first_scheme != -1L &&
                 grepl("^[Uu][Rr][Ll]$",
@@ -787,7 +828,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 if (!nzchar(remain)) {
                     break
                 }
-                first_scheme <- regexpr(k_sch_colon, remain, perl = TRUE)
+                first_scheme <- find_fixed_perl(remain, ":", k_sch_colon)
             }
             if (first_scheme == -1L) {
                 ## Simple case: no URL schemes => split at every comma
@@ -848,7 +889,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             } else {
                 prefix <- ""
             }
-            auth_loc <- regexpr(k_url_auth, remain, perl = TRUE)
+            auth_loc <- find_fixed_perl(remain, "://", k_url_auth)
             if (auth_loc == first_scheme) {
                 ## A. URL is of form "foo://", i.e. contains authority
                 ## part.  'point' points to location in 'remain'.

@@ -1921,67 +1921,85 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
     pick_one_url <- function(strings, remaining=FALSE, only_url=FALSE,
                              split_userinfo=FALSE, keep_punct=FALSE,
                              ignore_commas=TRUE, cut_comma_email=FALSE,
-                             allow_space=FALSE) {
+                             allow_space=FALSE, Str2=NULL, Str_idx=NULL) {
         n_strings <- length(strings)
-        n_work <- n_strings
-        work <- seq_len(n_work)
         has_url <- logical(n_strings)
         nc_strings <- nchar(strings)
         pre <- character(n_strings)
         post <- pre
-        str2 <- pre
         backup_pre <- pre
         backup_post <- pre
-        str_idx <- vector(mode = "list", length = n_strings)
         post_drop <- numeric(n_strings)
-        keep_work <- rep.int(TRUE, n_work)
-        for (k in seq_along(work)) {
-            this_work <- work[k]
-            string_k <- strings[this_work]
-            nc_k <- nc_strings[this_work]
-            drop_chars <-
-                gregexpr(k_replace_nsp, string_k, perl = TRUE)[[1L]]
-            if (drop_chars[1L] == -1L) {
-                str2[this_work] <- string_k
-                str_idx[[this_work]] <- seq_len(nc_k)
-            } else {
-                keep_flag <- rep.int(TRUE, nc_k)
-                drop_len <- attr(drop_chars, "match.length")
-                for (l in seq_along(drop_chars)) {
-                    keep_flag[seq.int(from = drop_chars[l], by = 1,
-                                      length.out = drop_len[l])] <- FALSE
-                }
-                if (any(keep_flag)) {
-                    keep_diff <- diff(c(0L, keep_flag, 0L))
-                    keep_loc <- which(keep_diff == 1L)
-                    keep_last <- which(keep_diff == -1L) - 1L
-                    keep_len <- keep_last - keep_loc + 1L
-                    n_keep <- length(keep_loc)
-                    str2[this_work] <-
-                        paste0(substring(string_k, keep_loc, keep_last),
-                               collapse = "\b")
-                    this_idx <- rep.int(NA_real_,
-                                        sum(keep_len) - 1 + n_keep)
-                    loc <- 1
-                    for (l in seq_len(n_keep)) {
-                        this_len <- keep_len[l]
-                        this_idx[seq.int(from = loc, by = 1,
-                                         length.out = this_len)] <-
-                            keep_loc[l]:keep_last[l]
-                        loc <- loc + 1 + this_len
-                    }
-                    str_idx[[this_work]] <- this_idx
-                    post_drop[this_work] <- nc_k - keep_last[l]
+        if (is.null(Str2)) {
+            work <- seq_len(n_strings)
+            str2 <- pre
+            str_idx <- vector(mode = "list", length = n_strings)
+            keep_work <- rep.int(TRUE, n_strings)
+            for (k in seq_along(work)) {
+                this_work <- work[k]
+                string_k <- strings[this_work]
+                nc_k <- nc_strings[this_work]
+                drop_chars <-
+                    gregexpr(k_replace_nsp, string_k, perl = TRUE)[[1L]]
+                if (drop_chars[1L] == -1L) {
+                    str2[this_work] <- string_k
+                    str_idx[[this_work]] <- seq_len(nc_k)
                 } else {
-                    pre[this_work] <- string_k
-                    str2[this_work] <- ""
-                    str_idx[[this_work]] <- numeric(0)
-                    keep_work[k] <- FALSE
+                    keep_flag <- rep.int(TRUE, nc_k)
+                    drop_len <- attr(drop_chars, "match.length")
+                    for (l in seq_along(drop_chars)) {
+                        keep_flag[seq.int(from = drop_chars[l], by = 1,
+                                          length.out = drop_len[l])] <-
+                                              FALSE
+                    }
+                    if (any(keep_flag)) {
+                        keep_diff <- diff(c(0L, keep_flag, 0L))
+                        keep_loc <- which(keep_diff == 1L)
+                        keep_last <- which(keep_diff == -1L) - 1L
+                        keep_len <- keep_last - keep_loc + 1L
+                        n_keep <- length(keep_loc)
+                        str2[this_work] <-
+                            paste0(substring(string_k,
+                                             keep_loc, keep_last),
+                                   collapse = "\b")
+                        this_idx <- rep.int(NA_real_,
+                                            sum(keep_len) - 1 + n_keep)
+                        loc <- 1
+                        for (l in seq_len(n_keep)) {
+                            this_len <- keep_len[l]
+                            this_idx[seq.int(from = loc, by = 1,
+                                             length.out = this_len)] <-
+                                                 keep_loc[l]:keep_last[l]
+                            loc <- loc + 1 + this_len
+                        }
+                        str_idx[[this_work]] <- this_idx
+                        post_drop[this_work] <- nc_k - keep_last[l]
+                    } else {
+                        pre[this_work] <- string_k
+                        str2[this_work] <- ""
+                        str_idx[[this_work]] <- numeric(0)
+                        keep_work[k] <- FALSE
+                    }
                 }
             }
+            work <- work[keep_work]
+            n_work <- length(work)
+        } else {
+            str2 <- Str2
+            str_idx <- Str_idx
+            nz_str2 <- nzchar(str2)
+            work <- which(nz_str2)
+            n_work <- length(work)
+            if (n_work < n_strings) {
+                z_idx <- which(!nz_str2)
+                pre[z_idx] <- strings[z_idx]
+            }
         }
-        work <- work[keep_work]
-        n_work <- length(work)
+        return_idx <- remaining && only_url
+        if (return_idx) {
+            str_out <- str2
+            idx_out <- str_idx
+        }
         has_ip_lit <- logical(n_strings)
         in_ip_lit <- vector(mode = "list", length = n_strings)
         for (k in seq_len(n_work)) {
@@ -2359,7 +2377,9 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 }
             }
         }
-        if (remaining) {
+        if (return_idx) {
+            list(str2, post, pre, str_out, idx_out)
+        } else if (remaining) {
             list(str2, post, pre)
         } else {
             list(str2, has_url)
@@ -2436,13 +2456,18 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         n_work <- n_strings
         pending <- character(n_work)
         skip <- numeric(n_work)
+        Str2 <- NULL
+        Str_idx <- NULL
         while (n_work > 0L) {
             pou <- pick_one_url(todo, only_url=TRUE, split_userinfo=TRUE,
                                 remaining = TRUE, cut_comma_email = TRUE,
-                                allow_space = TRUE)
+                                allow_space = TRUE,
+                                Str2 = Str2, Str_idx = Str_idx)
             url <- pou[[1L]]
             post <- pou[[2L]]
             pre <- pou[[3L]]
+            Str2 <- pou[[4L]]
+            Str_idx <- pou[[5L]]
             pou <- NULL
             nz_url <- nzchar(url)
             nc_pre <- nchar(pre)
@@ -2536,12 +2561,32 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 work <- work[do_more]
                 pending <- pending[do_more]
                 skip <- skip[do_more]
+                nc1 <- nchar(todo[do_more])
                 todo <- post[do_more]
+                nc2 <- nchar(todo)
+                progress <- nc1 - nc2
+                Str2 <- Str2[do_more]
+                Str_idx <- Str_idx[do_more]
+                n_work <- length(work)
+                for (k in seq_len(n_work)) {
+                    idx_k <- Str_idx[[k]]
+                    progress_k <- progress[k]
+                    keep_idx <- idx_k > progress_k
+                    first_keep <- which.max(keep_idx)
+                    if (length(first_keep) > 0L && keep_idx[first_keep]) {
+                        last_keep <- length(idx_k)
+                        Str2[k] <- substr(Str2[k], first_keep, last_keep)
+                        Str_idx[[k]] <-
+                            idx_k[first_keep:last_keep] - progress_k
+                    } else {
+                        Str2[k] <- ""
+                        Str_idx[[k]] <- numeric(0)
+                    }
+                }
                 if (do_skip) {
                     has_quotes <- has_quotes[do_more]
                     do_skip <- any(has_quotes)
                 }
-                n_work <- length(work)
             } else {
                 n_work <- 0L
             }

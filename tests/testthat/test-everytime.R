@@ -542,6 +542,12 @@ test_results <- function() {
     test_that("URL is picked from email if (!(plain_email || all_email))", {
         expect_identical(pc4, "http://www.example.org/")
     })
+    pc5 <- pick_urls(paste0(emails[2], "`ftp://", emails[2], "`"),
+                     plain_email = TRUE)
+    test_that("email address and URL with local part may coexist", {
+        expect_identical(pc5[[1]], paste0("ftp://", emails[2]))
+        expect_identical(pc5[[2]], emails[2])
+    })
 
     enc_input <- paste(urls[1], urls[2], sep = " \xe4 ")
     Encoding(enc_input) <- "UTF-8"

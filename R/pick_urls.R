@@ -1921,7 +1921,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
     pick_one_url <- function(strings, remaining=FALSE, only_url=FALSE,
                              split_userinfo=FALSE, keep_punct=FALSE,
                              ignore_commas=TRUE, cut_comma_email=FALSE,
-                             allow_space=FALSE, Str2=NULL, Str_idx=NULL) {
+                             allow_space=FALSE, cache_str=NULL,
+                             cache_idx=NULL, cache_ip=NULL) {
         n_strings <- length(strings)
         has_url <- logical(n_strings)
         nc_strings <- nchar(strings)
@@ -1930,7 +1931,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         backup_pre <- pre
         backup_post <- pre
         post_drop <- numeric(n_strings)
-        if (is.null(Str2)) {
+        if (is.null(cache_str)) {
             work <- seq_len(n_strings)
             str2 <- pre
             str_idx <- vector(mode = "list", length = n_strings)
@@ -1985,8 +1986,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             work <- work[keep_work]
             n_work <- length(work)
         } else {
-            str2 <- Str2
-            str_idx <- Str_idx
+            str2 <- cache_str
+            str_idx <- cache_idx
             nz_str2 <- nzchar(str2)
             work <- which(nz_str2)
             n_work <- length(work)
@@ -1995,29 +1996,36 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 pre[z_idx] <- strings[z_idx]
             }
         }
+        if (is.null(cache_ip)) {
+            has_ip_lit <- logical(n_strings)
+            in_ip_lit <- vector(mode = "list", length = n_strings)
+            for (k in seq_len(n_work)) {
+                work_k <- work[k]
+                str_k <- str2[work_k]
+                lits <- find_ip_literal(str_k, allow_space)
+                if (is.null(lits)) {
+                    next
+                }
+                has_ip_lit[work_k] <- TRUE
+                in_this <- logical(nchar(str_k))
+                lit_loc <- lits[[1L]]
+                lit_last <- lits[[2L]]
+                n_lits <- length(lit_loc)
+                for (l in seq_len(n_lits)) {
+                    in_this[lit_loc[l]:lit_last[l]] <- TRUE
+                }
+                in_ip_lit[[work_k]] <- in_this
+            }
+        } else {
+            in_ip_lit <- cache_ip
+            has_ip_lit <- vapply(in_ip_lit, is.logical, FALSE,
+                                 USE.NAMES = FALSE)
+        }
         return_idx <- remaining && only_url
         if (return_idx) {
             str_out <- str2
             idx_out <- str_idx
-        }
-        has_ip_lit <- logical(n_strings)
-        in_ip_lit <- vector(mode = "list", length = n_strings)
-        for (k in seq_len(n_work)) {
-            work_k <- work[k]
-            str_k <- str2[work_k]
-            lits <- find_ip_literal(str_k, allow_space)
-            if (is.null(lits)) {
-                next
-            }
-            has_ip_lit[work_k] <- TRUE
-            in_this <- logical(nchar(str_k))
-            lit_loc <- lits[[1L]]
-            lit_last <- lits[[2L]]
-            n_lits <- length(lit_loc)
-            for (l in seq_len(n_lits)) {
-                in_this[lit_loc[l]:lit_last[l]] <- TRUE
-            }
-            in_ip_lit[[work_k]] <- in_this
+            ip_out <- in_ip_lit
         }
         ## 1. At the beginning, with possible white space and / or
         ##    "URL:" prefix(es) (case insensitive).
@@ -2378,7 +2386,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             }
         }
         if (return_idx) {
-            list(str2, post, pre, str_out, idx_out)
+            list(str2, post, pre, str_out, idx_out, ip_out)
         } else if (remaining) {
             list(str2, post, pre)
         } else {
@@ -2456,18 +2464,20 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         n_work <- n_strings
         pending <- character(n_work)
         skip <- numeric(n_work)
-        Str2 <- NULL
-        Str_idx <- NULL
+        cache_str <- NULL
+        cache_idx <- NULL
+        cache_ip <- NULL
         while (n_work > 0L) {
             pou <- pick_one_url(todo, only_url=TRUE, split_userinfo=TRUE,
                                 remaining = TRUE, cut_comma_email = TRUE,
-                                allow_space = TRUE,
-                                Str2 = Str2, Str_idx = Str_idx)
+                                allow_space = TRUE, cache_str = cache_str,
+                                cache_idx = cache_idx, cache_ip=cache_ip)
             url <- pou[[1L]]
             post <- pou[[2L]]
             pre <- pou[[3L]]
-            Str2 <- pou[[4L]]
-            Str_idx <- pou[[5L]]
+            cache_str <- pou[[4L]]
+            cache_idx <- pou[[5L]]
+            cache_ip <- pou[[6L]]
             pou <- NULL
             nz_url <- nzchar(url)
             nc_pre <- nchar(pre)
@@ -2565,22 +2575,34 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                 todo <- post[do_more]
                 nc2 <- nchar(todo)
                 progress <- nc1 - nc2
-                Str2 <- Str2[do_more]
-                Str_idx <- Str_idx[do_more]
+                cache_str <- cache_str[do_more]
+                cache_idx <- cache_idx[do_more]
+                cache_ip <- cache_ip[do_more]
                 n_work <- length(work)
                 for (k in seq_len(n_work)) {
-                    idx_k <- Str_idx[[k]]
+                    idx_k <- cache_idx[[k]]
                     progress_k <- progress[k]
                     keep_idx <- idx_k > progress_k
                     first_keep <- which.max(keep_idx)
                     if (length(first_keep) > 0L && keep_idx[first_keep]) {
                         last_keep <- length(idx_k)
-                        Str2[k] <- substr(Str2[k], first_keep, last_keep)
-                        Str_idx[[k]] <-
-                            idx_k[first_keep:last_keep] - progress_k
+                        cache_str[k] <-
+                            substr(cache_str[k], first_keep, last_keep)
+                        first_last <- first_keep:last_keep
+                        cache_idx[[k]] <- idx_k[first_last] - progress_k
+                        ip_k <- cache_ip[[k]]
+                        if (!is.null(ip_k)) {
+                            ip_k <- ip_k[first_last]
+                            if (any(ip_k)) {
+                                cache_ip[[k]] <- ip_k
+                            } else {
+                                cache_ip[k] <- list(NULL)
+                            }
+                        }
                     } else {
-                        Str2[k] <- ""
-                        Str_idx[[k]] <- numeric(0)
+                        cache_str[k] <- ""
+                        cache_idx[[k]] <- numeric(0)
+                        cache_ip[k] <- list(NULL)
                     }
                 }
                 if (do_skip) {

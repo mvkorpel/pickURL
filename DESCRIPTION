@@ -1,8 +1,8 @@
 Package: pickURL
 Type: Package
 Title: Extract URLs and Email Addresses from Text
-Version: 0.4
-Date: 2015-11-20
+Version: 0.5
+Date: 2015-11-24
 Authors@R: person("Mikko", "Korpela", role = c("aut", "cre"),
     email = "mvkorpel@iki.fi")
 Author: Mikko Korpela [aut, cre]

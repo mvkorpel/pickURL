@@ -302,6 +302,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         stopifnot(is.character(url_pattern), length(url_pattern) == 1L,
                   !is.na(url_pattern), Encoding(url_pattern) != "bytes",
                   validEnc(url_pattern))
+        url_pattern_exists <- nzchar(url_pattern)
     }
     stopifnot(is.logical(single_item), length(single_item) == 1L,
               !is.na(single_item), is.logical(all_email),

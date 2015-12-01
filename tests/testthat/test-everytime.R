@@ -993,6 +993,12 @@ test_results <- function() {
         expect_equal(length(stress11b[[1]]), 0)
         expect_identical(stress11b[[2]], "%user@example.org")
     })
+    stress_in12 <- c(",URL:www.example.org/, ",
+                     ",http://www.example.org/,")
+    stress12 <- pick_urls(stress_in12, single_item = TRUE)
+    test_that("stress test 12 passes", {
+        expect_identical(stress12, "http://www.example.org/")
+    })
 
     foomail <- "e-mail:foo@bar.org"
     email1 <- pick_urls(foomail, url_pattern="")

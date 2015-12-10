@@ -353,7 +353,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
     ## Double quote (not escaped)
     k_quote <- "(?<!\\\\)\""
     ## Contents in quoted string
-    k_qcont <- "(?:\\\\.|[^\"\\\\[:blank:][:space:][:cntrl:]])"
+    k_qcont <- "(?:[^\"\\\\[:blank:][:space:][:cntrl:]]|\\\\.)"
     ## Quoted string
     k_qs <- paste0("\"(?:", k_fws_q, k_qcont, ")*+", k_fws_q, "\"")
     ##   a (possible) quote continues after the end of the string
@@ -368,7 +368,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
     k_rpar <- "(?<!\\\\)\\)"
     ## Domain name parts
     k_dns_nohyph <- "[^[:blank:][:space:][:cntrl:][:punct:]]"
-    k_dns_text <- paste0("(?:-|", k_dns_nohyph, ")")
+    k_dns_text <- paste0("(?:", k_dns_nohyph, "|-)")
     ## Literal IP address (fragments), IPv6 and future. See is_host().
     k_dtext <- paste0("[^][/?", "#@\\\\[:blank:][:space:][:cntrl:]]")
     ##   the whole address
@@ -402,11 +402,10 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
         k_rough_email1 <- "[^@]@(?:[^@]|$)"
         if (deobfuscate) {
             k_rough_email <-
-                paste0(k_rough_email, "|(?:\\)|", k_fws, ")[aA][tT]",
-                       "(?:\\(|", k_fws, ")")
+                paste0(k_rough_email, "|(?:", k_fws, "|\\))[aA][tT]",
+                       "(?:", k_fws, "|\\()")
             k_rough_email1 <-
-                paste0(k_rough_email1,
-                       "|(?:\\)|[ \t])[aA][tT](?:[ \t]*+$|\\(|[ \t])")
+                paste0(k_rough_email1, "|[) \t][aA][tT](?:[( \t]|$)")
         }
     }
     ## For rm_trailing()
@@ -627,7 +626,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             TRUE
         } else if (new_level == 0) {
             if (n_rpar > 0L) {
-                grepl("^[ \t]*$",
+                grepl("^[ \t]*+$",
                       substr(string, rpar[n_rpar] - level2 + 1, n),
                       perl = TRUE)
             } else {
@@ -1254,8 +1253,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             k_end_at <- c(k_end_at, FALSE, FALSE)
             k_rough_comment <-
                 paste0(k_rough_comment,
-                       "|\\)[[:space:]]*+[aA][tT](?:\\(|[[:space:]])",
-                       "|(?:\\)|[[:space:]])[aA][tT][[:space:]]*+\\(")
+                       "|\\)[[:space:]]*+[aA][tT][([:space:]]",
+                       "|[)[:space:]][aA][tT][[:space:]]*+\\(")
             k_nopunct <- "^(?:[^[:punct:]]|[-.])++$"
         }
         k_letter <- "[^[:blank:][:space:][:cntrl:][:punct:][:digit:]]"
@@ -2424,7 +2423,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             qpat <- if (deobfuscate) {
                 paste0(k_qs, "(?=[[:space:]]*+(?:[(@]|[aA][tT]))")
             } else {
-                paste0(k_qs, "(?=[[:space:]]*+(?:[(@]))")
+                paste0(k_qs, "(?=[[:space:]]*+[(@])")
             }
             reg_quotes <- gregexpr(qpat, strings, perl = TRUE)
             has_quotes <- vapply(reg_quotes, `[`, -1L, 1L,
@@ -3848,7 +3847,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
             work <- seq_len(n_x2)
         } else {
             k_rough_endpunct <- paste0(k_sch_colon, "[^[:space:]]*",
-                                       k_punct, "(?:$|[[:space:]])")
+                                       k_punct, "(?:[[:space:]]|$)")
             work <- grep(k_rough_endpunct, other_part, perl = TRUE)
             n_work <- length(work)
             if (n_work > 0L) {

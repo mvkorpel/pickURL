@@ -3,15 +3,16 @@ warnings_are_errors: true
 sudo: required
 
 before_install:
-  - sudo apt-get update && sudo apt-get --reinstall install -qq language-pack-en && sudo sh -c 'echo en_US ISO-8859-1 >> /var/lib/locales/supported.d/local' && sudo dpkg-reconfigure locales && locale -a
+  - sudo apt-get --reinstall install -qq language-pack-en && sudo sh -c 'echo en_US ISO-8859-1 >> /var/lib/locales/supported.d/local' && sudo dpkg-reconfigure locales && locale -a
 
-# Some dependencies of covr or rex (also a dependency of covr)
+# Some dependencies of pickURL, covr or rex (also a dependency of covr)
 r_binary_packages:
   - devtools
   - crayon
   - htmltools
   - magrittr
   - lazyeval
+  - testthat
 
 r_packages:
   - covr

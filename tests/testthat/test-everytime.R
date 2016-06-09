@@ -578,14 +578,12 @@ test_results <- function() {
 
     check_utf8 <- function() {
         pu_bad_a <- pick_urls(bad_url, url_pattern="")
-        pu_bad_b <- pick_urls(bad_url, url_pattern="", force_validEnc=TRUE)
         pu_bad2 <- pick_urls(bad_url2, url_pattern="")
         pu_a <- pick_urls(bad_a, url_pattern="")
         pu_latin <- pick_urls(latin_iri, url_pattern="")
         pu_unk <- pick_urls(unk_iri, url_pattern="")
         test_that("output is good in a UTF-8 locale", {
             expect_identical(pu_bad_a, bad_target)
-            expect_identical(pu_bad_b, bad_target)
             expect_identical(pu_bad2, bad_target2)
             expect_equal(length(pu_a), 0)
             expect_identical(pu_latin, latin_iri)
@@ -594,14 +592,12 @@ test_results <- function() {
     }
     check_latin <- function() {
         pu_bad_a <- pick_urls(bad_url, url_pattern="")
-        pu_bad_b <- pick_urls(bad_url, url_pattern="", force_validEnc=TRUE)
         pu_bad2 <- pick_urls(bad_url2, url_pattern="")
         pu_a <- pick_urls(bad_a, url_pattern="")
         pu_latin <- pick_urls(latin_iri, url_pattern="")
         pu_unk <- pick_urls(unk_iri, url_pattern="")
         test_that("output is good in a locale with a single byte encoding", {
             expect_identical(pu_bad_a, bad_target)
-            expect_identical(pu_bad_b, bad_target)
             expect_identical(pu_bad2, bad_target2)
             expect_equal(length(pu_a), 0)
             expect_identical(pu_latin, latin_iri)

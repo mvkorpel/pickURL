@@ -163,12 +163,6 @@
 #'   smaller than \code{1} are equivalent to \code{FALSE}, and
 #'   \code{Inf} is equivalent to \code{TRUE}. The default is \code{20}.
 #'
-#' @param force_validEnc a \code{logical} flag. If \code{TRUE}, the
-#'   function uses its internal \code{validEnc} function. This is mainly
-#'   intended for testing. The default is \code{FALSE} which means the
-#'   internal function is only used when \code{validEnc} is unavailable
-#'   (\R versions earlier than R-devel r68245 or \R 3.3.0).
-#'
 #' @return If \code{plain_email} is \code{FALSE}, returns a
 #' \code{character} vector containing the \acronym{URL}s in
 #' \code{x}. \acronym{URL} schemes are converted to lowercase, which
@@ -278,14 +272,7 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
                       email_pattern = "@[^.[]+\\.[^.]+",
                       need_scheme = missing(url_pattern) ||
                           !isTRUE(nzchar(url_pattern)),
-                      deobfuscate = TRUE, rm_endpunct = 20,
-                      force_validEnc = FALSE) {
-    if (!exists("validEnc", baseenv(), mode = "function") ||
-         isTRUE(force_validEnc)) {
-        validEnc <- function(x) {
-            suppressWarnings(grepl("", x, fixed = TRUE))
-        }
-    }
+                      deobfuscate = TRUE, rm_endpunct = 20) {
     ## Check arguments other than input strings --------------------------
     stopifnot(length(rm_endpunct) == 1L)
     if (is.logical(rm_endpunct)) {

@@ -1,8 +1,8 @@
 Package: pickURL
 Type: Package
 Title: Extract URLs and Email Addresses from Text
-Version: 0.7
-Date: 2015-12-10
+Version: 0.8
+Date: 2016-06-09
 Authors@R: person("Mikko", "Korpela", role = c("aut", "cre"),
     email = "mvkorpel@iki.fi")
 Author: Mikko Korpela [aut, cre]
@@ -12,7 +12,7 @@ Description: Contains one function which extracts individual URLs and email
     addresses from the input text. It heuristically splits comma-separated URLs
     despite the comma being a valid character in URLs.
 Depends:
-    R (>= 3.2.0)
+    R (>= 3.3.0)
 Suggests:
     testthat (>= 0.8),
     withr

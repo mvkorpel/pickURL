@@ -596,12 +596,26 @@ test_results <- function() {
         pu_a <- pick_urls(bad_a, url_pattern="")
         pu_latin <- pick_urls(latin_iri, url_pattern="")
         pu_unk <- pick_urls(unk_iri, url_pattern="")
-        test_that("output is good in a locale with a single byte encoding", {
+        test_that("output is good in a Latin-1 locale", {
             expect_identical(pu_bad_a, bad_target)
             expect_identical(pu_bad2, bad_target2)
             expect_equal(length(pu_a), 0)
             expect_identical(pu_latin, latin_iri)
             expect_identical(pu_unk, latin_iri)
+        })
+    }
+    check_C <- function() {
+        pu_bad_a <- pick_urls(bad_url, url_pattern="")
+        pu_bad2 <- pick_urls(bad_url2, url_pattern="")
+        pu_a <- pick_urls(bad_a, url_pattern="")
+        pu_latin <- pick_urls(latin_iri, url_pattern="")
+        pu_unk <- pick_urls(unk_iri, url_pattern="")
+        test_that("output is good in the C locale", {
+            expect_identical(pu_bad_a, bad_target)
+            expect_identical(pu_bad2, bad_target2)
+            expect_equal(length(pu_a), 0)
+            expect_identical(pu_latin, latin_iri)
+            expect_identical(pu_unk, bad_target)
         })
     }
     if (.Platform[["OS.type"]] == "unix") {
@@ -626,14 +640,14 @@ test_results <- function() {
         } else {
             check_utf8()
         }
-        if (l10[["MBCS"]]) {
+        if (!l10[["Latin-1"]]) {
             latin_locales <- c("en_US.iso88591", "en_US.ISO8859-1",
                                "de_DE.iso88591", "de_DE.ISO8859-1", "de_DE")
             latin_found <- FALSE
             for (loc in latin_locales) {
                 loc_vec[] <- loc
                 if (suppressWarnings(tryCatch(withr::with_locale(loc_vec,
-                                                                 !(l10n_info()[["MBCS"]])),
+                                                                 l10n_info()[["Latin-1"]]),
                                               error = function(...) FALSE))) {
                     latin_found <- TRUE
                     break
@@ -644,6 +658,24 @@ test_results <- function() {
             }
         } else {
             check_latin()
+        }
+        if (!identical(sessionInfo()[["locale"]], "C")) {
+            C_locales <- "C"
+            C_found <- FALSE
+            for (loc in C_locales) {
+                loc_vec[] <- loc
+                if (suppressWarnings(tryCatch(withr::with_locale(loc_vec,
+                                                                 identical(sessionInfo()[["locale"]], "C")),
+                                              error = function(...) FALSE))) {
+                    C_found <- TRUE
+                    break
+                }
+            }
+            if (C_found) {
+                withr::with_locale(loc_vec, check_C())
+            }
+        } else {
+            check_C()
         }
     } else if (!(l10n_info()[["MBCS"]])) {
         check_latin()

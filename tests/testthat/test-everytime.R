@@ -924,7 +924,7 @@ test_results <- function() {
                           url_pattern="", need_scheme=TRUE)
     test_that("stress test 2 passes", {
         expect_equal(length(stress2a), 0)
-        expect_less_than(length(stress2b), 3)
+        expect_lt(length(stress2b), 3)
         expect_false(any(grepl("url", stress2b, fixed=TRUE)))
         expect_equal(length(stress2c), 0)
     })

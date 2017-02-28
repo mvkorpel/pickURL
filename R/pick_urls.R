@@ -174,6 +174,9 @@
 #' \code{character} vector with the email addresses found. See
 #' \code{all_email}.
 #'
+#' If non-ASCII results are present, their \code{\link{Encoding}} will
+#' be "UTF-8".
+#'
 #' @examples
 #'
 #' email1 <- "user1@@example.org"
@@ -3034,7 +3037,8 @@ pick_urls <- function(x, plain_email = all_email, single_item = FALSE,
     ## Preprocess input strings ------------------------------------------
     x2 <- as.character(x)
     tmp <- split_invalid(x2)
-    x2 <- tmp[[1L]]
+    ## Convert to UTF-8 for more predictable string ops, e.g. in C locale
+    x2 <- enc2utf8(tmp[[1L]])
     keep_flag <- tmp[[2L]]
     keep_idx <- tmp[[3L]]
     n_x2 <- length(keep_idx)

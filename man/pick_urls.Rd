@@ -102,13 +102,16 @@ the first element \code{"url"} is the \acronym{URL} vector
 described above and the second element \code{"email"} is a
 \code{character} vector with the email addresses found. See
 \code{all_email}.
+
+If non-ASCII results are present, their \code{\link{Encoding}} will
+be "UTF-8".
 }
 \description{
 \code{pick_urls} extracts individual \acronym{URL}s and email
 addresses from the input text. The function recognizes comma and
 whitespace as characters separating individual \acronym{URL}s, as
 is the specification of the \acronym{URL} field in the DESCRIPTION
-file of \R packages (R Core Team, 2015). See \sQuote{Commas and
+file of \R packages (R Core Team, 2017). See \sQuote{Commas and
 Whitespace} for details.
 }
 \section{Details}{
@@ -189,6 +192,7 @@ accepted by the function.
 
 }
 }
+
 \examples{
 
 email1 <- "user1@example.org"
@@ -269,7 +273,7 @@ Mockapetris, P. (1987) Domain names - concepts and facilities. RFC
 1034, RFC Editor.
 \url{https://www.rfc-editor.org/rfc/rfc1034.txt}.
 
-R Core Team (2015) R: A language and environment for statistical
+R Core Team (2017) R: A language and environment for statistical
 computing. R Foundation for Statistical Computing, Vienna, Austria.
 \url{https://www.R-project.org/}.
 
@@ -277,4 +281,3 @@ Resnick, P., editor (2008) Internet Message Format. RFC 5322, RFC
 Editor.  \url{https://www.rfc-editor.org/rfc/rfc5322.txt}.
 }
 \keyword{utilities}
-

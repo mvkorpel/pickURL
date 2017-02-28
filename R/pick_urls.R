@@ -4,7 +4,7 @@
 #' addresses from the input text. The function recognizes comma and
 #' whitespace as characters separating individual \acronym{URL}s, as
 #' is the specification of the \acronym{URL} field in the DESCRIPTION
-#' file of \R packages (R Core Team, 2015). See \sQuote{Commas and
+#' file of \R packages (R Core Team, 2017). See \sQuote{Commas and
 #' Whitespace} for details.
 #'
 #' @section Details:
@@ -259,7 +259,7 @@
 #' 1034, RFC Editor.
 #' \url{https://www.rfc-editor.org/rfc/rfc1034.txt}.
 #'
-#' R Core Team (2015) R: A language and environment for statistical
+#' R Core Team (2017) R: A language and environment for statistical
 #' computing. R Foundation for Statistical Computing, Vienna, Austria.
 #' \url{https://www.R-project.org/}.
 #'
